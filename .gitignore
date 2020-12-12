@@ -6,3 +6,4 @@
 /tests/coverage/
 /coverage/
 /*.cache
+/.idea/
