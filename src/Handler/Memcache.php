@@ -32,12 +32,13 @@ class Memcache
 
         self::$lifeTime = get_cfg_var("session.gc_maxlifetime");
 
-        session_set_save_handler(array($this, 'open'),
-                array($this, 'close'),
-                array($this, 'read'),
-                array($this, 'write'),
-                array($this, 'destroy'),
-                array($this, 'gc')
+        session_set_save_handler(
+            array($this, 'open'),
+            array($this, 'close'),
+            array($this, 'read'),
+            array($this, 'write'),
+            array($this, 'destroy'),
+            array($this, 'gc')
         );
     }
 

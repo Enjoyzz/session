@@ -10,7 +10,7 @@
     ],
     "require": {
         "php": "^7.2|^8.0",
-        "enjoys/traits": "*"
+        "enjoys/traits": "^1.3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.4",
