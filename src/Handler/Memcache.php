@@ -2,6 +2,8 @@
 
 namespace Enjoys\Session\Handler;
 
+use Enjoys\Session\HandlerInterface;
+
 /**
  * Description of xSessionMemcache
  *
@@ -10,7 +12,7 @@ namespace Enjoys\Session\Handler;
  *
  * @author Root
  */
-class Memcache
+class Memcache implements \SessionHandlerInterface
 {
 
     private static $memcache;
@@ -42,39 +44,39 @@ class Memcache
         );
     }
 
-    public static function open()
+    public function open($save_path, $name)
     {
         return true;
     }
 
-    public static function read($id)
+    public function read($id)
     {
         return self::$memcache->get("sessions/{$id}");
     }
 
-    public static function write($id, $data)
+    public function write($id, $data)
     {
         return self::$memcache->set("sessions/{$id}", $data, self::$compress, self::$lifeTime);
     }
 
-    public static function destroy($id)
+    public function destroy($id)
     {
         return self::$memcache->delete("sessions/{$id}");
     }
 
-    public static function gc()
+    public function gc($maxlifetime)
     {
         return true;
     }
 
-    public static function close()
+    public function close()
     {
         return true;
     }
 
     public function __destruct()
     {
-        session_write_close();
+
     }
 }
 
