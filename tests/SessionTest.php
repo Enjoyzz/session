@@ -2,39 +2,43 @@
 
 namespace Tests\Enjoys\Session;
 
+
+use Enjoys\Session\Handler\SecureHandler;
 use Enjoys\Session\Session;
 use PHPUnit\Framework\TestCase;
 
 new Session(
-    null, [
-            'gc_maxlifetime' => 10,
-            'save_path' => __DIR__ . '/temp'
-        ]
+    new SecureHandler(),
+    [
+        'gc_maxlifetime' => 10,
+        'save_path' => __DIR__ . '/_sessions'
+    ]
 );
 
 class SessionTest extends TestCase
 {
+    private array $test = [];
+    private Session $session;
+
+    /**
+     * @throws \Exception
+     */
+    protected function setUp(): void
+    {
+        $this->test = ['test' => \random_int(0, 1000)];
+        $this->session = new Session();
+    }
+
     protected function tearDown(): void
     {
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator(
-                __DIR__ . '/temp',
-                \FilesystemIterator::SKIP_DOTS
-            ),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        /** @var \SplFileInfo $file */
-        foreach ($files as $file) {
-            $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath());
-        }
+        session_gc();
     }
 
     public function test__construct()
     {
         $this->assertSame(\PHP_SESSION_ACTIVE, session_status());
-        $session = new Session();
-        $this->assertArrayHasKey('cookie_httponly', $session->getOptions());
+//        $session = new Session();
+//        $this->assertArrayHasKey('cookie_httponly', $session->getOptions());
     }
 
 //    public function testSessionId()
@@ -53,24 +57,34 @@ class SessionTest extends TestCase
 
     public function testHas()
     {
-        Session::set(['test' => 5]);
-        $this->assertSame(true, Session::has('test'));
+        $this->session->set($this->test);
+        $this->assertSame(true, $this->session->has('test'));
     }
+
+//    public function testClear()
+//    {
+//        $this->session->clear();
+//        $this->assertSame(null, $_SESSION);
+//    }
 
     public function testDelete()
     {
-        Session::set(['test' => 5]);
-        $this->assertSame(true, Session::has('test'));
-        Session::delete('test');
-        $this->assertSame(false, Session::has('test'));
-        $this->assertSame(true, Session::get('test', true));
+        $this->session->set($this->test);
+        $this->assertSame(true, $this->session->has('test'));
+        $this->assertSame($this->test, $_SESSION);
+        $this->session->delete('test');
+        $this->assertSame([], $_SESSION);
+        $this->assertSame(false, $this->session->has('test'));
+        $this->assertSame(true, $this->session->get('test', true));
     }
 
     public function testSetGet()
     {
-        Session::set(['test' => 5]);
-        $this->assertSame(5, Session::get('test'));
+        $this->session->set($this->test);
+        $this->assertSame($this->test['test'], $this->session->get('test'));
     }
+
+
 
 
 }
