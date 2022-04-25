@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Enjoys\Session\Handler;
 
+use Enjoys\Session\Exception;
+
 /**
  * Class SecureHandler
  * @see https://github.com/ezimuel/PHP-Secure-Session
@@ -104,6 +106,7 @@ class SecureHandler extends \SessionHandler
      * @param string $data
      * @param string $key
      * @return string
+     * @throws Exception
      */
     protected function decrypt($data, $key)
     {
@@ -118,7 +121,7 @@ class SecureHandler extends \SessionHandler
             true
         );
         if (! hash_equals($hmac, $hmacNew)) {
-            throw new Exception\AuthenticationFailedException('Authentication failed');
+            throw new Exception('Authentication failed');
         }
         // Decrypt
         return openssl_decrypt(
@@ -137,7 +140,7 @@ class SecureHandler extends \SessionHandler
      * @return string
      * @throws \Exception
      */
-    protected function getKey($name)
+    protected function getKey($name): string
     {
         if (empty($_COOKIE[$name])) {
             $key         = random_bytes(64); // 32 for encryption and 32 for authentication

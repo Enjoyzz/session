@@ -8,10 +8,13 @@
       "email": "deadly.info@gmail.com"
     }
   ],
-  "require": {    "php": ">= 7.4"
+  "require": {
+    "php": ">= 7.4",
+    "ext-openssl": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.4"
+    "phpunit/phpunit": "^9.4",
+    "vimeo/psalm": "^4.0"
   },
   "autoload": {
     "psr-4": {
@@ -22,5 +25,8 @@
     "psr-4": {
       "Tests\\Enjoys\\Session\\": "tests/"
     }
+  },
+  "scripts": {
+    "psalm": "vendor/bin/psalm"
   }
 }
