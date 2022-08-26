@@ -31,7 +31,7 @@ class Session
      */
     public function __construct(\SessionHandlerInterface $handler = null, array $options = [], array $data = null)
     {
-        if ( session_status() != \PHP_SESSION_ACTIVE) {
+        if (session_status() != \PHP_SESSION_ACTIVE) {
             $this->setOptions($options);
             if ($handler !== null) {
                 session_set_save_handler($handler, true);
@@ -41,7 +41,8 @@ class Session
         $_SESSION = $data ?? $_SESSION;
     }
 
-    public function getSessionId(){
+    public function getSessionId(): string
+    {
         return session_id();
     }
 
@@ -59,14 +60,13 @@ class Session
 
 
     /**
-     * @param array<mixed> $params
+     * @param array $params
      */
-    public  function set(array $params): void
+    public function set(array $params): void
     {
         foreach ($params as $key => $param) {
             $_SESSION[$key] = $param;
         }
-
     }
 
     /**
@@ -74,7 +74,7 @@ class Session
      * @param mixed|null $default
      * @return mixed|null
      */
-    public  function get(string $key, $default = null)
+    public function get(string $key, $default = null)
     {
         if (self::has($key)) {
             return $_SESSION[$key];
@@ -82,19 +82,19 @@ class Session
         return $default;
     }
 
-    public  function delete(string $key): void
+    public function delete(string $key): void
     {
         if (self::has($key)) {
             unset($_SESSION[$key]);
         }
     }
 
-    public  function clear(): void
+    public function clear(): void
     {
         $_SESSION = null;
     }
 
-    public  function has(string $key): bool
+    public function has(string $key): bool
     {
         return array_key_exists($key, $_SESSION);
     }

@@ -8,7 +8,10 @@
       "email": "deadly.info@gmail.com"
     }
   ],
-  "require": {    "php": ">= 7.4"
+  "require": {
+    "php": ">=7.4",
+    "ext-openssl": "*",
+    "ext-mbstring": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.4"

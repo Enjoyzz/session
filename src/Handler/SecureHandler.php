@@ -1,14 +1,19 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Enjoys\Session\Handler;
+
+use Exception;
+use RuntimeException;
+use SessionHandler;
 
 /**
  * Class SecureHandler
  * @see https://github.com/ezimuel/PHP-Secure-Session
  * @package Enjoys\Session\Handler
  */
-class SecureHandler extends \SessionHandler
+class SecureHandler extends SessionHandler
 {
     /**
      * Encryption and authentication key
@@ -21,39 +26,46 @@ class SecureHandler extends \SessionHandler
      */
     public function __construct()
     {
-        if (! extension_loaded('openssl')) {
-            throw new \RuntimeException(sprintf(
-                                            "You need the OpenSSL extension to use %s",
-                                            __CLASS__
-                                        ));
+        if (!extension_loaded('openssl')) {
+            throw new RuntimeException(
+                sprintf(
+                    "You need the OpenSSL extension to use %s",
+                    __CLASS__
+                )
+            );
         }
-        if (! extension_loaded('mbstring')) {
-            throw new \RuntimeException(sprintf(
-                                            "You need the Multibytes extension to use %s",
-                                            __CLASS__
-                                        ));
+        if (!extension_loaded('mbstring')) {
+            throw new RuntimeException(
+                sprintf(
+                    "You need the Multibytes extension to use %s",
+                    __CLASS__
+                )
+            );
         }
     }
 
     /**
      * Open the session
      *
-     * @param string $save_path
-     * @param string $session_name
+     * @param string $path
+     * @param string $name
      * @return bool
+     * @throws Exception
      */
-    public function open($save_path, $session_name)
+    public function open($path, $name): bool
     {
-        $this->key = $this->getKey('KEY_' . $session_name);
-        return parent::open($save_path, $session_name);
+        $this->key = $this->getKey('KEY_' . $name);
+        return parent::open($path, $name);
     }
 
     /**
      * Read from session and decrypt
      *
      * @param string $id
+     * @return string
+     * @throws \Enjoys\Session\Exception
      */
-    public function read($id)
+    public function read($id): string
     {
         $data = parent::read($id);
         return empty($data) ? '' : $this->decrypt($data, $this->key);
@@ -64,8 +76,10 @@ class SecureHandler extends \SessionHandler
      *
      * @param string $id
      * @param string $data
+     * @return bool
+     * @throws Exception
      */
-    public function write($id, $data)
+    public function write($id, $data): bool
     {
         return parent::write($id, $this->encrypt($data, $this->key));
     }
@@ -76,8 +90,9 @@ class SecureHandler extends \SessionHandler
      * @param string $data
      * @param string $key
      * @return string
+     * @throws Exception
      */
-    protected function encrypt($data, $key)
+    protected function encrypt(string $data, string $key): string
     {
         $iv = random_bytes(16); // AES block size in CBC mode
         // Encryption
@@ -104,11 +119,12 @@ class SecureHandler extends \SessionHandler
      * @param string $data
      * @param string $key
      * @return string
+     * @throws \Enjoys\Session\Exception
      */
-    protected function decrypt($data, $key)
+    protected function decrypt(string $data, string $key): string
     {
-        $hmac       = mb_substr($data, 0, 32, '8bit');
-        $iv         = mb_substr($data, 32, 16, '8bit');
+        $hmac = mb_substr($data, 0, 32, '8bit');
+        $iv = mb_substr($data, 32, 16, '8bit');
         $ciphertext = mb_substr($data, 48, null, '8bit');
         // Authentication
         $hmacNew = hash_hmac(
@@ -117,8 +133,8 @@ class SecureHandler extends \SessionHandler
             mb_substr($key, 32, null, '8bit'),
             true
         );
-        if (! hash_equals($hmac, $hmacNew)) {
-            throw new Exception\AuthenticationFailedException('Authentication failed');
+        if (!hash_equals($hmac, $hmacNew)) {
+            throw new \Enjoys\Session\Exception('Authentication failed');
         }
         // Decrypt
         return openssl_decrypt(
@@ -135,18 +151,18 @@ class SecureHandler extends \SessionHandler
      *
      * @param string $name
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
-    protected function getKey($name)
+    protected function getKey(string $name): string
     {
         if (empty($_COOKIE[$name])) {
-            $key         = random_bytes(64); // 32 for encryption and 32 for authentication
+            $key = random_bytes(64); // 32 for encryption and 32 for authentication
             $cookieParam = session_get_cookie_params();
-            $encKey      = base64_encode($key);
+            $encKey = base64_encode($key);
             // if session cookie lifetime > 0 then add to current time
             // otherwise leave it as zero, honoring zero's special meaning
             // expire at browser close.
-            $expires     = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
+            $expires = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
 
             if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
                 // PHP 7.3.0+ can use options as array,
