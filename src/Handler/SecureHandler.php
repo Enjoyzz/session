@@ -16,7 +16,7 @@ class SecureHandler extends \SessionHandler
      * Encryption and authentication key
      * @var string
      */
-    protected string $key;
+    protected string $key = '';
 
     /**
      * Constructor
@@ -40,22 +40,25 @@ class SecureHandler extends \SessionHandler
     /**
      * Open the session
      *
-     * @param string $save_path
-     * @param string $session_name
+     * @param string $path
+     * @param string $name
      * @return bool
+     * @throws \Exception
      */
-    public function open($save_path, $session_name)
+    public function open($path, $name): bool
     {
-        $this->key = $this->getKey('KEY_' . $session_name);
-        return parent::open($save_path, $session_name);
+        $this->key = $this->getKey('KEY_' . $name);
+        return parent::open($path, $name);
     }
 
     /**
      * Read from session and decrypt
      *
      * @param string $id
+     * @return string
+     * @throws Exception
      */
-    public function read($id)
+    public function read($id): string
     {
         $data = parent::read($id);
         return empty($data) ? '' : $this->decrypt($data, $this->key);
@@ -66,8 +69,9 @@ class SecureHandler extends \SessionHandler
      *
      * @param string $id
      * @param string $data
+     * @throws \Exception
      */
-    public function write($id, $data)
+    public function write($id, $data): bool
     {
         return parent::write($id, $this->encrypt($data, $this->key));
     }
@@ -78,8 +82,9 @@ class SecureHandler extends \SessionHandler
      * @param string $data
      * @param string $key
      * @return string
+     * @throws \Exception
      */
-    protected function encrypt($data, $key)
+    protected function encrypt(string $data, string $key): string
     {
         $iv = random_bytes(16); // AES block size in CBC mode
         // Encryption
@@ -108,7 +113,7 @@ class SecureHandler extends \SessionHandler
      * @return string
      * @throws Exception
      */
-    protected function decrypt($data, $key)
+    protected function decrypt(string $data, string $key): string
     {
         $hmac       = mb_substr($data, 0, 32, '8bit');
         $iv         = mb_substr($data, 32, 16, '8bit');
@@ -140,7 +145,7 @@ class SecureHandler extends \SessionHandler
      * @return string
      * @throws \Exception
      */
-    protected function getKey($name): string
+    protected function getKey(string $name): string
     {
         if (empty($_COOKIE[$name])) {
             $key         = random_bytes(64); // 32 for encryption and 32 for authentication
