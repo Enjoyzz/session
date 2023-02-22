@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Enjoys\Session\Handler;
 
+use Enjoys\Session\RuntimeException;
 use Exception;
-use RuntimeException;
 use SessionHandler;
 
 /**
@@ -19,7 +19,7 @@ class SecureHandler extends SessionHandler
      * Encryption and authentication key
      * @var string
      */
-    protected string $key;
+    protected string $key = '';
 
     /**
      * Constructor
@@ -37,7 +37,7 @@ class SecureHandler extends SessionHandler
         if (!extension_loaded('mbstring')) {
             throw new RuntimeException(
                 sprintf(
-                    "You need the Multibytes extension to use %s",
+                    "You need the Multibyte extension to use %s",
                     __CLASS__
                 )
             );
@@ -63,7 +63,7 @@ class SecureHandler extends SessionHandler
      *
      * @param string $id
      * @return string
-     * @throws \Enjoys\Session\Exception
+     * @throws RuntimeException
      */
     public function read($id): string
     {
@@ -76,7 +76,6 @@ class SecureHandler extends SessionHandler
      *
      * @param string $id
      * @param string $data
-     * @return bool
      * @throws Exception
      */
     public function write($id, $data): bool
@@ -119,7 +118,7 @@ class SecureHandler extends SessionHandler
      * @param string $data
      * @param string $key
      * @return string
-     * @throws \Enjoys\Session\Exception
+     * @throws RuntimeException
      */
     protected function decrypt(string $data, string $key): string
     {
@@ -134,7 +133,7 @@ class SecureHandler extends SessionHandler
             true
         );
         if (!hash_equals($hmac, $hmacNew)) {
-            throw new \Enjoys\Session\Exception('Authentication failed');
+            throw new RuntimeException('Authentication failed');
         }
         // Decrypt
         return openssl_decrypt(
@@ -157,31 +156,20 @@ class SecureHandler extends SessionHandler
     {
         if (empty($_COOKIE[$name])) {
             $key = random_bytes(64); // 32 for encryption and 32 for authentication
+            /** @var array{"lifetime":int, "path": string, "domain":string, "secure": bool, "httponly": bool, "samesite":string} $cookieParam */
             $cookieParam = session_get_cookie_params();
             $encKey = base64_encode($key);
             // if session cookie lifetime > 0 then add to current time
             // otherwise leave it as zero, honoring zero's special meaning
             // expire at browser close.
             $expires = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
+            // PHP 7.3.0+ can use options as array,
+            // however session_get_cookie_params() returns 'lifetime',
+            // but setting the options via array requires you to use 'expires'
+            $cookieParam['expires'] = $expires;
+            unset($cookieParam['lifetime']);
+            setcookie($name, $encKey, $cookieParam);
 
-            if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
-                // PHP 7.3.0+ can use options as array,
-                // however session_get_cookie_params() returns 'lifetime',
-                // but setting the options via array requires you to use 'expires'
-                $cookieParam['expires'] = $expires;
-                unset($cookieParam['lifetime']);
-                setcookie($name, $encKey, $cookieParam);
-            } else {
-                setcookie(
-                    $name,
-                    $encKey,
-                    $expires,
-                    $cookieParam['path'],
-                    $cookieParam['domain'],
-                    $cookieParam['secure'],
-                    $cookieParam['httponly']
-                );
-            }
             $_COOKIE[$name] = $encKey;
         } else {
             $key = base64_decode($_COOKIE[$name]);

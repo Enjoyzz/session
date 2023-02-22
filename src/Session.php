@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Enjoys\Session;
 
+use SessionHandlerInterface;
+
+use const PHP_SESSION_ACTIVE;
+
 /**
  * Class Session
  * @see https://www.php.net/manual/ru/session.security.ini.php
@@ -13,7 +17,10 @@ namespace Enjoys\Session;
 class Session
 {
 
-    private static array $options = [
+    /**
+     * @var array<string, string|int>
+     */
+    private array $options = [
         "serialize_handler" => 'php_serialize',
         "use_cookies" => 1,
         "use_only_cookies" => 1,
@@ -24,60 +31,76 @@ class Session
     ];
 
     /**
-     * Session constructor.
-     * @param \SessionHandlerInterface|null $handler
-     * @param array $options
-     * @param array|null $data
+     * @var array<string, mixed>
      */
-    public function __construct(\SessionHandlerInterface $handler = null, array $options = [], array $data = null)
+    private array $data;
+
+    /**
+     * Session constructor.
+     * @param SessionHandlerInterface|null $handler
+     * @param array<string, string|int> $options
+     * @param array<string, mixed>|null $data
+     */
+    public function __construct(SessionHandlerInterface $handler = null, array $options = [], array $data = null)
     {
-        if (session_status() != \PHP_SESSION_ACTIVE) {
+        if ( session_status() != PHP_SESSION_ACTIVE) {
             $this->setOptions($options);
             if ($handler !== null) {
                 session_set_save_handler($handler, true);
             }
             session_start($this->getOptions());
         }
-        $_SESSION = $data ?? $_SESSION;
+        $this->data = $data ?? $_SESSION ?? [];
     }
 
-    public function getSessionId(): string
+    /**
+     * @return string|null
+     */
+    public function getSessionId()
     {
         return session_id();
     }
 
-    private function getOptions(): array
-    {
-        return self::$options;
-    }
-
+    /**
+     * @param array<string, string|int> $options
+     * @return void
+     */
     private function setOptions(array $options): void
     {
         foreach ($options as $key => $option) {
-            self::$options[$key] = $option;
+           $this->options[$key] = $option;
         }
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 
 
     /**
-     * @param array $params
+     * @param array<string, mixed> $params
+     * @psalm-suppress MixedAssignment
      */
     public function set(array $params): void
     {
         foreach ($params as $key => $param) {
-            $_SESSION[$key] = $param;
+            $this->data[$key] = $param;
         }
+        $this->emit();
     }
 
     /**
+     * @template TDefault
      * @param string $key
-     * @param mixed|null $default
-     * @return mixed|null
+     * @param TDefault $default
+     * @return mixed|TDefault
      */
     public function get(string $key, $default = null)
     {
         if (self::has($key)) {
-            return $_SESSION[$key];
+            /** @var array<string, mixed> $_SESSION */
+            return $this->data[$key];
         }
         return $default;
     }
@@ -85,18 +108,30 @@ class Session
     public function delete(string $key): void
     {
         if (self::has($key)) {
-            unset($_SESSION[$key]);
+            unset($this->data[$key]);
         }
+        $this->emit();
     }
 
     public function clear(): void
     {
-        $_SESSION = null;
+        $this->data = [];
+        $this->emit();
     }
 
     public function has(string $key): bool
     {
-        return array_key_exists($key, $_SESSION);
+        return array_key_exists($key, $this->data);
+    }
+
+    private function emit(): void
+    {
+        $_SESSION = $this->data;
+    }
+
+    public function getData(): ?array
+    {
+        return $this->data;
     }
 
 }
