@@ -8,7 +8,7 @@ use Enjoys\Session\Session;
 use PHPUnit\Framework\TestCase;
 
 new Session(
-    null,
+    new SecureHandler(),
     [
         'gc_maxlifetime' => 10,
         'save_path' => __DIR__ . '/_sessions'
@@ -27,7 +27,11 @@ class SessionTest extends TestCase
     protected function setUp(): void
     {
         $this->test = ['test' => \random_int(0, 1000)];
-        $this->session = new Session();
+        $this->session = new Session(    new SecureHandler(),
+            [
+                'gc_maxlifetime' => 10,
+                'save_path' => __DIR__ . '/_sessions'
+            ]);
     }
 
     protected function tearDown(): void

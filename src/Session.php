@@ -30,13 +30,16 @@ class Session
         "gc_maxlifetime" => 1440
     ];
 
-    private ?array $data;
+    /**
+     * @var array<string, mixed>
+     */
+    private array $data;
 
     /**
      * Session constructor.
      * @param SessionHandlerInterface|null $handler
-     * @param array $options
-     * @param array|null $data
+     * @param array<string, string|int> $options
+     * @param array<string, mixed>|null $data
      */
     public function __construct(SessionHandlerInterface $handler = null, array $options = [], array $data = null)
     {
@@ -47,14 +50,12 @@ class Session
             }
             session_start($this->getOptions());
         }
-        $this->data = $data ?? $_SESSION;
+        $this->data = $data ?? $_SESSION ?? [];
     }
 
 
-
-
     /**
-     * @return string|false
+     * @return string|false|null
      */
     public function getSessionId()
     {
@@ -80,11 +81,11 @@ class Session
 
     /**
      * @param array<string, mixed> $params
+     * @psalm-suppress MixedAssignment
      */
     public  function set(array $params): void
     {
         foreach ($params as $key => $param) {
-            /** @var array<string, mixed> $_SESSION */
             $this->data[$key] = $param;
         }
         $this->emit();
@@ -116,7 +117,7 @@ class Session
 
     public  function clear(): void
     {
-        $this->data = null;
+        $this->data = [];
         $this->emit();
     }
 
