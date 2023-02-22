@@ -25,19 +25,11 @@ new Session(
  */
 class SessionTest extends TestCase
 {
-    /**
-     * @var array<string,mixed>
-     */
-    private array $test = [];
+
     private Session $session;
-
-
-    /**
-     * @throws Exception
-     */
+    
     protected function setUp(): void
     {
-        $this->test = ['test' => random_int(0, 1000)];
         $this->session = new Session(
             new SecureHandler(),
             [
@@ -68,40 +60,53 @@ class SessionTest extends TestCase
         $this->assertSame(__DIR__ . '/_sessions', session_save_path());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testHas(): void
     {
-        $this->session->set($this->test);
+        $this->session->set('test', $data = random_int(0, 1000));
         $this->assertSame(true, $this->session->has('test'));
-        $this->assertSame($this->test['test'], $_SESSION['test']);
+        $this->assertSame($data, $_SESSION['test']);
+        $this->assertSame($data, $this->session->get('test'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testClear(): void
     {
-        $this->session->set($this->test);
-        $this->assertSame($this->test['test'], $this->session->get('test'));
-        $this->assertSame($this->test['test'], $_SESSION['test']);
+        $this->session->set('test', $data = random_int(0, 1000));
+        $this->assertSame($data, $this->session->get('test'));
+        $this->assertSame($data, $_SESSION['test']);
 
         $this->session->clear();
         $this->assertSame([], $this->session->getData());
         $this->assertSame([], $_SESSION);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testDelete(): void
     {
-        $this->session->set($this->test);
+        $this->session->set('test', $data = random_int(0, 1000));
         $this->assertSame(true, $this->session->has('test'));
-        $this->assertSame($this->test, $_SESSION);
+        $this->assertSame(['test' => $data], $_SESSION);
         $this->session->delete('test');
         $this->assertSame([], $_SESSION);
         $this->assertSame(false, $this->session->has('test'));
         $this->assertSame(true, $this->session->get('test', true));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testSet(): void
     {
-        $this->session->set($this->test);
-        $this->assertSame($this->test['test'], $this->session->get('test'));
-        $this->assertSame($this->test['test'], $_SESSION['test']);
+        $this->session->set('test', $data = random_int(0, 1000));
+        $this->assertSame($data, $this->session->get('test'));
+        $this->assertSame($data, $_SESSION['test']);
     }
 
 
