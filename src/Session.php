@@ -43,7 +43,7 @@ class Session
      */
     public function __construct(SessionHandlerInterface $handler = null, array $options = [], array $data = null)
     {
-        if (session_status() != PHP_SESSION_ACTIVE) {
+        if ( session_status() != PHP_SESSION_ACTIVE) {
             $this->setOptions($options);
             if ($handler !== null) {
                 session_set_save_handler($handler, true);
@@ -53,14 +53,8 @@ class Session
         $this->data = $data ?? $_SESSION ?? [];
     }
 
-    private function emit(): void
-    {
-        $_SESSION = $this->data;
-    }
-
     /**
      * @return string|null
-     * @noinspection PhpMissingReturnTypeInspection
      */
     public function getSessionId()
     {
@@ -74,7 +68,7 @@ class Session
     private function setOptions(array $options): void
     {
         foreach ($options as $key => $option) {
-            $this->options[$key] = $option;
+           $this->options[$key] = $option;
         }
     }
 
@@ -85,12 +79,14 @@ class Session
 
 
     /**
-     * @param mixed $data
+     * @param array<string, mixed> $params
      * @psalm-suppress MixedAssignment
      */
-    public function set(string $key, $data = null): void
+    public function set(array $params): void
     {
-        $this->data[$key] = $data;
+        foreach ($params as $key => $param) {
+            $this->data[$key] = $param;
+        }
         $this->emit();
     }
 
@@ -126,6 +122,11 @@ class Session
     public function has(string $key): bool
     {
         return array_key_exists($key, $this->data);
+    }
+
+    private function emit(): void
+    {
+        $_SESSION = $this->data;
     }
 
     public function getData(): ?array
