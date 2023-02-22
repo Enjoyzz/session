@@ -53,11 +53,10 @@ class Session
         $this->data = $data ?? $_SESSION ?? [];
     }
 
-
     /**
      * @return string|null
      */
-    public function getSessionId(): ?string
+    public function getSessionId()
     {
         return session_id();
     }
@@ -83,13 +82,12 @@ class Session
      * @param array<string, mixed> $params
      * @psalm-suppress MixedAssignment
      */
-    public  function set(array $params): void
+    public function set(array $params): void
     {
         foreach ($params as $key => $param) {
             $this->data[$key] = $param;
         }
         $this->emit();
-
     }
 
     /**
@@ -98,7 +96,7 @@ class Session
      * @param TDefault $default
      * @return mixed|TDefault
      */
-    public  function get(string $key, $default = null)
+    public function get(string $key, $default = null)
     {
         if (self::has($key)) {
             /** @var array<string, mixed> $_SESSION */
@@ -107,7 +105,7 @@ class Session
         return $default;
     }
 
-    public  function delete(string $key): void
+    public function delete(string $key): void
     {
         if (self::has($key)) {
             unset($this->data[$key]);
@@ -115,13 +113,13 @@ class Session
         $this->emit();
     }
 
-    public  function clear(): void
+    public function clear(): void
     {
         $this->data = [];
         $this->emit();
     }
 
-    public  function has(string $key): bool
+    public function has(string $key): bool
     {
         return array_key_exists($key, $this->data);
     }

@@ -163,8 +163,6 @@ class SecureHandler extends SessionHandler
             // otherwise leave it as zero, honoring zero's special meaning
             // expire at browser close.
             $expires = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
-
-
             // PHP 7.3.0+ can use options as array,
             // however session_get_cookie_params() returns 'lifetime',
             // but setting the options via array requires you to use 'expires'
