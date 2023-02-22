@@ -5,7 +5,12 @@ namespace Tests\Enjoys\Session;
 
 use Enjoys\Session\Handler\SecureHandler;
 use Enjoys\Session\Session;
+use Exception;
 use PHPUnit\Framework\TestCase;
+
+use function random_int;
+
+use const PHP_SESSION_ACTIVE;
 
 new Session(
     new SecureHandler(),
@@ -15,23 +20,31 @@ new Session(
     ]
 );
 
+/**
+ * @psalm-suppress PropertyNotSetInConstructor
+ */
 class SessionTest extends TestCase
 {
+    /**
+     * @var array<string,mixed>
+     */
     private array $test = [];
     private Session $session;
 
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setUp(): void
     {
-        $this->test = ['test' => \random_int(0, 1000)];
-        $this->session = new Session(    new SecureHandler(),
+        $this->test = ['test' => random_int(0, 1000)];
+        $this->session = new Session(
+            new SecureHandler(),
             [
                 'gc_maxlifetime' => 10,
                 'save_path' => __DIR__ . '/_sessions'
-            ]);
+            ]
+        );
     }
 
     protected function tearDown(): void
@@ -39,13 +52,13 @@ class SessionTest extends TestCase
         session_gc();
     }
 
-    public function test__construct()
+    public function test__construct(): void
     {
-        $this->assertSame(\PHP_SESSION_ACTIVE, session_status());
+        $this->assertSame(PHP_SESSION_ACTIVE, session_status());
     }
 
 
-    public function testSetOptions()
+    public function testSetOptions(): void
     {
         $this->assertSame(
             '10',
@@ -55,25 +68,25 @@ class SessionTest extends TestCase
         $this->assertSame(__DIR__ . '/_sessions', session_save_path());
     }
 
-    public function testHas()
+    public function testHas(): void
     {
         $this->session->set($this->test);
         $this->assertSame(true, $this->session->has('test'));
         $this->assertSame($this->test['test'], $_SESSION['test']);
     }
 
-    public function testClear()
+    public function testClear(): void
     {
         $this->session->set($this->test);
         $this->assertSame($this->test['test'], $this->session->get('test'));
         $this->assertSame($this->test['test'], $_SESSION['test']);
 
         $this->session->clear();
-        $this->assertSame(null, $this->session->getData());
-        $this->assertSame(null, $_SESSION);
+        $this->assertSame([], $this->session->getData());
+        $this->assertSame([], $_SESSION);
     }
 
-    public function testDelete()
+    public function testDelete(): void
     {
         $this->session->set($this->test);
         $this->assertSame(true, $this->session->has('test'));
@@ -84,14 +97,12 @@ class SessionTest extends TestCase
         $this->assertSame(true, $this->session->get('test', true));
     }
 
-    public function testSet()
+    public function testSet(): void
     {
         $this->session->set($this->test);
         $this->assertSame($this->test['test'], $this->session->get('test'));
         $this->assertSame($this->test['test'], $_SESSION['test']);
     }
-
-
 
 
 }

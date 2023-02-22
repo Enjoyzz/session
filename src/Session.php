@@ -55,9 +55,9 @@ class Session
 
 
     /**
-     * @return string|false|null
+     * @return string|null
      */
-    public function getSessionId()
+    public function getSessionId(): ?string
     {
         return session_id();
     }

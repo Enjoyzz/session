@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Enjoys\Session\Handler;
 
-use Enjoys\Session\Exception;
-use RuntimeException;
+use Enjoys\Session\RuntimeException;
+use Exception;
 use SessionHandler;
 
 /**
@@ -50,7 +50,7 @@ class SecureHandler extends SessionHandler
      * @param string $path
      * @param string $name
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function open($path, $name): bool
     {
@@ -63,7 +63,7 @@ class SecureHandler extends SessionHandler
      *
      * @param string $id
      * @return string
-     * @throws Exception
+     * @throws RuntimeException
      */
     public function read($id): string
     {
@@ -76,7 +76,7 @@ class SecureHandler extends SessionHandler
      *
      * @param string $id
      * @param string $data
-     * @throws \Exception
+     * @throws Exception
      */
     public function write($id, $data): bool
     {
@@ -89,7 +89,7 @@ class SecureHandler extends SessionHandler
      * @param string $data
      * @param string $key
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     protected function encrypt(string $data, string $key): string
     {
@@ -118,7 +118,7 @@ class SecureHandler extends SessionHandler
      * @param string $data
      * @param string $key
      * @return string
-     * @throws Exception
+     * @throws RuntimeException
      */
     protected function decrypt(string $data, string $key): string
     {
@@ -133,7 +133,7 @@ class SecureHandler extends SessionHandler
             true
         );
         if (!hash_equals($hmac, $hmacNew)) {
-            throw new Exception('Authentication failed');
+            throw new RuntimeException('Authentication failed');
         }
         // Decrypt
         return openssl_decrypt(
@@ -150,7 +150,7 @@ class SecureHandler extends SessionHandler
      *
      * @param string $name
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     protected function getKey(string $name): string
     {
