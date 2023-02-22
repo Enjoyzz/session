@@ -20,7 +20,7 @@ class Session
     /**
      * @var array<string, string|int>
      */
-    private static array $options = [
+    private array $options = [
         "serialize_handler" => 'php_serialize',
         "use_cookies" => 1,
         "use_only_cookies" => 1,
@@ -29,6 +29,8 @@ class Session
         "gc_divisor" => 100,
         "gc_maxlifetime" => 1440
     ];
+
+    private ?array $data;
 
     /**
      * Session constructor.
@@ -45,21 +47,18 @@ class Session
             }
             session_start($this->getOptions());
         }
-        $_SESSION = $data ?? $_SESSION;
+        $this->data = $data ?? $_SESSION;
     }
 
 
-    public function getSessionId(): string
-    {
-        return session_id();
-    }
+
 
     /**
-     * @return array<string, string|int>
+     * @return string|false
      */
-    private function getOptions(): array
+    public function getSessionId()
     {
-        return self::$options;
+        return session_id();
     }
 
     /**
@@ -69,8 +68,13 @@ class Session
     private function setOptions(array $options): void
     {
         foreach ($options as $key => $option) {
-            self::$options[$key] = $option;
+           $this->options[$key] = $option;
         }
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 
 
@@ -81,8 +85,9 @@ class Session
     {
         foreach ($params as $key => $param) {
             /** @var array<string, mixed> $_SESSION */
-            $_SESSION[$key] = $param;
+            $this->data[$key] = $param;
         }
+        $this->emit();
 
     }
 
@@ -96,7 +101,7 @@ class Session
     {
         if (self::has($key)) {
             /** @var array<string, mixed> $_SESSION */
-            return $_SESSION[$key];
+            return $this->data[$key];
         }
         return $default;
     }
@@ -104,19 +109,30 @@ class Session
     public  function delete(string $key): void
     {
         if (self::has($key)) {
-            unset($_SESSION[$key]);
+            unset($this->data[$key]);
         }
+        $this->emit();
     }
 
     public  function clear(): void
     {
-        $_SESSION = null;
+        $this->data = null;
+        $this->emit();
     }
 
     public  function has(string $key): bool
     {
-        /** @var array<string, mixed> $_SESSION */
-        return array_key_exists($key, $_SESSION);
+        return array_key_exists($key, $this->data);
+    }
+
+    private function emit(): void
+    {
+        $_SESSION = $this->data;
+    }
+
+    public function getData(): ?array
+    {
+        return $this->data;
     }
 
 }

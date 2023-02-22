@@ -8,7 +8,7 @@ use Enjoys\Session\Session;
 use PHPUnit\Framework\TestCase;
 
 new Session(
-    new SecureHandler(),
+    null,
     [
         'gc_maxlifetime' => 10,
         'save_path' => __DIR__ . '/_sessions'
@@ -19,6 +19,7 @@ class SessionTest extends TestCase
 {
     private array $test = [];
     private Session $session;
+
 
     /**
      * @throws \Exception
@@ -37,35 +38,36 @@ class SessionTest extends TestCase
     public function test__construct()
     {
         $this->assertSame(\PHP_SESSION_ACTIVE, session_status());
-//        $session = new Session();
-//        $this->assertArrayHasKey('cookie_httponly', $session->getOptions());
     }
 
-//    public function testSessionId()
-//    {
-//        $session = new Session();
-//        $this->assertSame('', $session->getSessionId());
-//    }
 
-    public function testGetOptions()
+    public function testSetOptions()
     {
         $this->assertSame(
             '10',
             ini_get('session.gc_maxlifetime')
         );
+
+        $this->assertSame(__DIR__ . '/_sessions', session_save_path());
     }
 
     public function testHas()
     {
         $this->session->set($this->test);
         $this->assertSame(true, $this->session->has('test'));
+        $this->assertSame($this->test['test'], $_SESSION['test']);
     }
 
-//    public function testClear()
-//    {
-//        $this->session->clear();
-//        $this->assertSame(null, $_SESSION);
-//    }
+    public function testClear()
+    {
+        $this->session->set($this->test);
+        $this->assertSame($this->test['test'], $this->session->get('test'));
+        $this->assertSame($this->test['test'], $_SESSION['test']);
+
+        $this->session->clear();
+        $this->assertSame(null, $this->session->getData());
+        $this->assertSame(null, $_SESSION);
+    }
 
     public function testDelete()
     {
@@ -78,10 +80,11 @@ class SessionTest extends TestCase
         $this->assertSame(true, $this->session->get('test', true));
     }
 
-    public function testSetGet()
+    public function testSet()
     {
         $this->session->set($this->test);
         $this->assertSame($this->test['test'], $this->session->get('test'));
+        $this->assertSame($this->test['test'], $_SESSION['test']);
     }
 
 
