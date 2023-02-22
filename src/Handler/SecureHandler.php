@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Enjoys\Session\Handler;
@@ -23,17 +24,21 @@ class SecureHandler extends \SessionHandler
      */
     public function __construct()
     {
-        if (! extension_loaded('openssl')) {
-            throw new \RuntimeException(sprintf(
-                                            "You need the OpenSSL extension to use %s",
-                                            __CLASS__
-                                        ));
+        if (!extension_loaded('openssl')) {
+            throw new \RuntimeException(
+                sprintf(
+                    "You need the OpenSSL extension to use %s",
+                    __CLASS__
+                )
+            );
         }
-        if (! extension_loaded('mbstring')) {
-            throw new \RuntimeException(sprintf(
-                                            "You need the Multibytes extension to use %s",
-                                            __CLASS__
-                                        ));
+        if (!extension_loaded('mbstring')) {
+            throw new \RuntimeException(
+                sprintf(
+                    "You need the Multibytes extension to use %s",
+                    __CLASS__
+                )
+            );
         }
     }
 
@@ -115,8 +120,8 @@ class SecureHandler extends \SessionHandler
      */
     protected function decrypt(string $data, string $key): string
     {
-        $hmac       = mb_substr($data, 0, 32, '8bit');
-        $iv         = mb_substr($data, 32, 16, '8bit');
+        $hmac = mb_substr($data, 0, 32, '8bit');
+        $iv = mb_substr($data, 32, 16, '8bit');
         $ciphertext = mb_substr($data, 48, null, '8bit');
         // Authentication
         $hmacNew = hash_hmac(
@@ -125,7 +130,7 @@ class SecureHandler extends \SessionHandler
             mb_substr($key, 32, null, '8bit'),
             true
         );
-        if (! hash_equals($hmac, $hmacNew)) {
+        if (!hash_equals($hmac, $hmacNew)) {
             throw new Exception('Authentication failed');
         }
         // Decrypt
@@ -148,32 +153,22 @@ class SecureHandler extends \SessionHandler
     protected function getKey(string $name): string
     {
         if (empty($_COOKIE[$name])) {
-            $key         = random_bytes(64); // 32 for encryption and 32 for authentication
+            $key = random_bytes(64); // 32 for encryption and 32 for authentication
             $cookieParam = session_get_cookie_params();
-            $encKey      = base64_encode($key);
+            $encKey = base64_encode($key);
             // if session cookie lifetime > 0 then add to current time
             // otherwise leave it as zero, honoring zero's special meaning
             // expire at browser close.
-            $expires     = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
+            $expires = ($cookieParam['lifetime'] > 0) ? time() + $cookieParam['lifetime'] : 0;
 
-            if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
-                // PHP 7.3.0+ can use options as array,
-                // however session_get_cookie_params() returns 'lifetime',
-                // but setting the options via array requires you to use 'expires'
-                $cookieParam['expires'] = $expires;
-                unset($cookieParam['lifetime']);
-                setcookie($name, $encKey, $cookieParam);
-            } else {
-                setcookie(
-                    $name,
-                    $encKey,
-                    $expires,
-                    $cookieParam['path'],
-                    $cookieParam['domain'],
-                    $cookieParam['secure'],
-                    $cookieParam['httponly']
-                );
-            }
+
+            // PHP 7.3.0+ can use options as array,
+            // however session_get_cookie_params() returns 'lifetime',
+            // but setting the options via array requires you to use 'expires'
+            $cookieParam['expires'] = $expires;
+            unset($cookieParam['lifetime']);
+            setcookie($name, $encKey, $cookieParam);
+
             $_COOKIE[$name] = $encKey;
         } else {
             $key = base64_decode($_COOKIE[$name]);
