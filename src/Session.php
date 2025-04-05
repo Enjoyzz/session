@@ -41,7 +41,7 @@ class Session
      * @param array<string, string|int> $options
      * @param array<string, mixed>|null $data
      */
-    public function __construct(SessionHandlerInterface $handler = null, array $options = [], array $data = null)
+    public function __construct(?SessionHandlerInterface $handler = null, array $options = [], ?array $data = null)
     {
         if ( session_status() != PHP_SESSION_ACTIVE) {
             $this->setOptions($options);
